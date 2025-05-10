@@ -4,129 +4,323 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emergency Helper</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
-        .container { max-width: 400px; margin: 40px auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
-        h2 { text-align: center; }
-        label { display: block; margin-top: 1em; }
-        input, select, button { width: 100%; padding: 0.5em; margin-top: 0.5em; border-radius: 4px; border: 1px solid #ccc; }
-        button { background: #e63946; color: #fff; border: none; font-weight: bold; margin-top: 1.5em; }
-        button:hover { background: #d90429; }
-        #authModal {
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
+        .container { max-width: 420px; margin: 40px auto; background: #fff; padding: 2em 1.5em; border-radius: 14px; box-shadow: 0 4px 24px #0002; }
+        h2 { text-align: center; font-weight: 700; letter-spacing: 0.5px; color: #1d3557; margin-bottom: 1.5em; }
+        .big-btn {
+            width: 100%;
+            padding: 1.2em 1em;
+            margin: 1em 0;
+            font-size: 1.15em;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #e63946 60%, #457b9d 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px #0001;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 0.9em;
+            justify-content: flex-start;
+            letter-spacing: 0.02em;
+        }
+        .big-btn:active, .big-btn:focus { background: linear-gradient(90deg, #d90429 60%, #1d3557 100%); outline: none; box-shadow: 0 0 0 2px #a8dadc; transform: scale(0.98); }
+        .big-btn i { font-size: 1.5em; margin-right: 0.5em; }
+        .sub-btn {
+            width: 100%;
+            padding: 1em 1em;
+            margin: 0.5em 0;
+            font-size: 1em;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(90deg, #457b9d 60%, #a8dadc 100%);
+            color: #fff;
+            font-weight: 500;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 0.7em;
+            justify-content: flex-start;
+        }
+        .sub-btn:active, .sub-btn:focus { background: linear-gradient(90deg, #1d3557 60%, #a8dadc 100%); outline: none; box-shadow: 0 0 0 2px #e63946; transform: scale(0.98); }
+        .sub-btn i { font-size: 1.2em; margin-right: 0.4em; }
+        .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
             z-index: 1000; transition: opacity 0.3s;
         }
-        #authModal .modal-content {
-            background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px #0002; width: 320px;
+        .modal-content {
+            background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 2px 8px #0002; width: 320px;
             display: flex; flex-direction: column; align-items: center;
         }
-        #authModal h3 { margin-bottom: 1em; }
-        #authModal input { margin-bottom: 1em; }
-        #authModal .error { color: #e63946; margin-bottom: 1em; }
-        #signoutBtn { margin-top: 1em; background: #888; }
+        .modal-content input, .modal-content textarea {
+            width: 100%; margin-bottom: 1em; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc;
+        }
+        .modal-content label { align-self: flex-start; margin-bottom: 0.2em; }
+        .modal-content .error { color: #e63946; margin-bottom: 1em; }
+        #signoutBtn { margin-top: 1em; background: #888; border-radius: 8px; font-weight: 500; }
         #signoutBtn:hover { background: #444; }
+        textarea { resize: vertical; min-height: 48px; }
+        @media (max-width: 500px) {
+            .container { max-width: 98vw; padding: 1em 0.5em; }
+            .modal-content { width: 95vw; padding: 1em; }
+            .big-btn { font-size: 1em; padding: 1em 0.7em; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Emergency Helper</h2>
-        <form id="emergencyForm" method="post" action="/submit" style="display:none;">
-            <label for="name">Your Name:</label>
-            <input type="text" id="name" name="name" required>
-
-            <label for="request_type">Select Emergency:</label>
-            <select id="request_type" name="request_type" required>
-                <option value="Report casualty">Report casualty</option>
-                <option value="Request evacuation">Request evacuation</option>
-                <option value="Find medical services near me">Find medical services near me</option>
-            </select>
-
-            <input type="hidden" id="latitude" name="latitude" required>
-            <input type="hidden" id="longitude" name="longitude" required>
-
-            <button type="submit">Submit</button>
-        </form>
+        <div id="mainContent">
+            <!-- Dynamic content will be rendered here -->
+        </div>
         <p id="locationStatus" style="color: #888; text-align: center;"></p>
         <button id="signoutBtn" style="display:none;">Sign out</button>
     </div>
-    <!-- Modal Overlay for Auth -->
-    <div id="authModal" style="display:none;">
+    <!-- Modal Overlay for Auth/Sign-up -->
+    <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <h3>Sign in to Emergency Helper</h3>
             <input type="text" id="phoneInput" placeholder="Enter Indian mobile number" maxlength="10" pattern="[6-9]{1}[0-9]{9}" required>
+            <label for="nameInput">Name <span style="color:red">*</span></label>
+            <input type="text" id="nameInput" placeholder="Enter your name" required>
+            <label for="surnameInput">Family Name / Surname (optional)</label>
+            <input type="text" id="surnameInput" placeholder="Enter family name (optional)">
             <div class="error" id="authError"></div>
             <button id="signInBtn">Sign In</button>
         </div>
     </div>
     <script>
-        // Geolocation
-        window.onload = function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    document.getElementById('latitude').value = position.coords.latitude;
-                    document.getElementById('longitude').value = position.coords.longitude;
-                    document.getElementById('locationStatus').textContent = "Location detected.";
-                }, function() {
-                    document.getElementById('locationStatus').textContent = "Could not get your location. Please enable location services.";
-                });
+    // Geolocation
+    let userLat = null, userLng = null;
+    window.onload = function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                userLat = position.coords.latitude;
+                userLng = position.coords.longitude;
+                document.getElementById('locationStatus').textContent = "Location detected.";
+            }, function() {
+                document.getElementById('locationStatus').textContent = "Could not get your location. Please enable location services.";
+            });
+        } else {
+            document.getElementById('locationStatus').textContent = "Geolocation is not supported by this browser.";
+        }
+    };
+    // Auth logic
+    const authModal = document.getElementById('authModal');
+    const mainContent = document.getElementById('mainContent');
+    const signoutBtn = document.getElementById('signoutBtn');
+    const phoneInput = document.getElementById('phoneInput');
+    const nameInput = document.getElementById('nameInput');
+    const surnameInput = document.getElementById('surnameInput');
+    const authError = document.getElementById('authError');
+    const signInBtn = document.getElementById('signInBtn');
+
+    function showAuthModal() {
+        authModal.style.display = 'flex';
+        mainContent.style.display = 'none';
+        signoutBtn.style.display = 'none';
+    }
+    function hideAuthModal() {
+        authModal.style.display = 'none';
+        mainContent.style.display = '';
+        signoutBtn.style.display = '';
+    }
+    function checkAuth() {
+        fetch('/auth-status').then(r => r.json()).then(data => {
+            if (data.authenticated && data.name) {
+                hideAuthModal();
+                renderMainMenu();
             } else {
-                document.getElementById('locationStatus').textContent = "Geolocation is not supported by this browser.";
-            }
-        };
-
-        // Auth logic
-        const authModal = document.getElementById('authModal');
-        const emergencyForm = document.getElementById('emergencyForm');
-        const signoutBtn = document.getElementById('signoutBtn');
-        const phoneInput = document.getElementById('phoneInput');
-        const authError = document.getElementById('authError');
-        const signInBtn = document.getElementById('signInBtn');
-
-        function showAuthModal() {
-            authModal.style.display = 'flex';
-            emergencyForm.style.display = 'none';
-            signoutBtn.style.display = 'none';
-        }
-        function hideAuthModal() {
-            authModal.style.display = 'none';
-            emergencyForm.style.display = '';
-            signoutBtn.style.display = '';
-        }
-        function checkAuth() {
-            fetch('/auth-status').then(r => r.json()).then(data => {
-                if (data.authenticated) {
-                    hideAuthModal();
-                } else {
-                    showAuthModal();
-                }
-            });
-        }
-        // On page load, check auth
-        checkAuth();
-
-        signInBtn.onclick = function() {
-            const phone = phoneInput.value.trim();
-            authError.textContent = '';
-            fetch('/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'phone=' + encodeURIComponent(phone)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    hideAuthModal();
-                } else {
-                    authError.textContent = data.message || 'Invalid phone number.';
-                }
-            });
-        };
-        signoutBtn.onclick = function() {
-            fetch('/logout', {method: 'POST'}).then(() => {
                 showAuthModal();
-            });
+            }
+        });
+    }
+    checkAuth();
+    signInBtn.onclick = function() {
+        const phone = phoneInput.value.trim();
+        const name = nameInput.value.trim();
+        const surname = surnameInput.value.trim();
+        authError.textContent = '';
+        if (!phone || !name) {
+            authError.textContent = 'Phone and Name are required.';
+            return;
+        }
+        fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'phone=' + encodeURIComponent(phone) + '&name=' + encodeURIComponent(name) + '&surname=' + encodeURIComponent(surname)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                hideAuthModal();
+                renderMainMenu();
+            } else {
+                authError.textContent = data.message || 'Invalid input.';
+            }
+        });
+    };
+    signoutBtn.onclick = function() {
+        fetch('/logout', {method: 'POST'}).then(() => {
+            showAuthModal();
+        });
+    };
+
+    // --- Inline SPA-like UI logic ---
+    function renderMainMenu() {
+        mainContent.innerHTML = `
+            <button class="big-btn" id="btnAttack"><i class="bi bi-exclamation-triangle-fill"></i>1. Report attack</button>
+            <button class="big-btn" id="btnInjury"><i class="bi bi-emoji-dizzy-fill"></i>2. Report injury/casualty</button>
+            <button class="big-btn" id="btnMedical"><i class="bi bi-hospital-fill"></i>3. Find medical services</button>
+            <button class="big-btn" id="btnHelpline"><i class="bi bi-telephone-fill"></i>4. Call helpline</button>
+        `;
+        document.getElementById('btnAttack').onclick = renderAttackSubtypes;
+        document.getElementById('btnInjury').onclick = renderInjurySubtypes;
+        document.getElementById('btnMedical').onclick = renderMedicalConfirmation;
+        document.getElementById('btnHelpline').onclick = renderHelplineConfirmation;
+    }
+    function renderAttackSubtypes() {
+        mainContent.innerHTML = `
+            <h3 style='color:#e63946;'><i class="bi bi-exclamation-triangle-fill"></i> Report Attack</h3>
+            <button class="sub-btn" id="btnBullets"><i class="bi bi-bullseye"></i>Bullets</button>
+            <button class="sub-btn" id="btnDrones"><i class="bi bi-robot"></i>Enemy drones</button>
+            <button class="sub-btn" id="btnArtillery"><i class="bi bi-lightning-charge-fill"></i>Heavy artillery / Bomblasts / Missiles</button>
+            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
+        `;
+        document.getElementById('btnBullets').onclick = () => renderAttackConfirm('Bullets');
+        document.getElementById('btnDrones').onclick = () => renderAttackConfirm('Enemy drones');
+        document.getElementById('btnArtillery').onclick = () => renderAttackConfirm('Heavy artillery / Bomblasts / Missiles');
+        document.getElementById('btnBack').onclick = renderMainMenu;
+    }
+    function renderAttackConfirm(subType) {
+        mainContent.innerHTML = `
+            <h3 style='color:#e63946;'><i class="bi bi-exclamation-triangle-fill"></i> ${subType}</h3>
+            <p>Confirm location and submit?</p>
+            <button class="sub-btn" id="btnConfirm"><i class="bi bi-check-circle-fill"></i>Confirm & Submit</button>
+            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
+        `;
+        document.getElementById('btnConfirm').onclick = () => submitRequest('Report attack', subType, '');
+        document.getElementById('btnBack').onclick = renderAttackSubtypes;
+    }
+    function renderInjurySubtypes() {
+        mainContent.innerHTML = `
+            <h3 style='color:#e63946;'><i class="bi bi-emoji-dizzy-fill"></i> Report Injury/Casualty</h3>
+            <button class="sub-btn" id="btnLifeThreat"><i class="bi bi-heart-pulse-fill"></i>Life threatening injury</button>
+            <button class="sub-btn" id="btnDeath"><i class="bi bi-x-octagon-fill"></i>Death</button>
+            <button class="sub-btn" id="btnMinor"><i class="bi bi-emoji-frown-fill"></i>Minor injuries</button>
+            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
+        `;
+        document.getElementById('btnLifeThreat').onclick = () => renderInjuryDetails('Life threatening injury');
+        document.getElementById('btnDeath').onclick = () => renderInjuryDetails('Death');
+        document.getElementById('btnMinor').onclick = () => renderInjuryDetails('Minor injuries');
+        document.getElementById('btnBack').onclick = renderMainMenu;
+    }
+    function renderInjuryDetails(subType) {
+        mainContent.innerHTML = `
+            <h3 style='color:#e63946;'><i class="bi bi-emoji-dizzy-fill"></i> ${subType}</h3>
+            <label for='injuryDetails'>Details (optional):</label>
+            <textarea id='injuryDetails' rows='2' placeholder='Describe the situation (optional)'></textarea>
+            <p style='color:#e63946;font-size:0.95em;'>Warning: False or frivolous reports may delay real help.</p>
+            <button class="sub-btn" id="btnConfirm"><i class="bi bi-check-circle-fill"></i>Confirm & Submit</button>
+            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
+        `;
+        document.getElementById('btnConfirm').onclick = () => {
+            const details = document.getElementById('injuryDetails').value;
+            submitRequest('Report injury/casualty', subType, details);
         };
+        document.getElementById('btnBack').onclick = renderInjurySubtypes;
+    }
+    function renderMedicalConfirmation() {
+        mainContent.innerHTML = `
+            <h3 style='color:#457b9d;'><i class="bi bi-hospital-fill"></i> Find Medical Services</h3>
+            <p>We are connecting you to the nearest medical services. (This is a mock confirmation.)</p>
+            <div style='margin-top:1em;'>
+                <b>What to do now?</b>
+                <ul style='text-align:left;font-size:0.98em;'>
+                    <li>Stay calm and keep yourself safe.</li>
+                    <li>Move to a secure location if possible.</li>
+                    <li>Apply first aid if trained.</li>
+                    <li>Help is on the way.</li>
+                </ul>
+            </div>
+            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back to Main Menu</button>
+        `;
+        document.getElementById('btnBack').onclick = renderMainMenu;
+    }
+    function renderHelplineConfirmation() {
+        mainContent.innerHTML = `
+            <h3 style='color:#457b9d;'><i class="bi bi-telephone-fill"></i> Call Helpline</h3>
+            <p>Your request to call the helpline has been logged. (This is a mock confirmation.)</p>
+            <div style='margin-top:1em;'>
+                <b>What to do now?</b>
+                <ul style='text-align:left;font-size:0.98em;'>
+                    <li>Stay on the line if you are connected.</li>
+                    <li>Keep your phone charged and nearby.</li>
+                    <li>Help is on the way.</li>
+                </ul>
+            </div>
+            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back to Main Menu</button>
+        `;
+        document.getElementById('btnBack').onclick = renderMainMenu;
+        // Actually submit the request
+        submitRequest('Call helpline', '', '');
+    }
+    function renderFinalConfirmation(message, adviceList) {
+        mainContent.innerHTML = `
+            <h3 style='color:#38b000;'><i class="bi bi-patch-check-fill"></i> Submitted!</h3>
+            <p>${message}</p>
+            <div style='margin-top:1em;'>
+                <b>What to do now?</b>
+                <ul style='text-align:left;font-size:0.98em;'>
+                    ${adviceList.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            </div>
+            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back to Main Menu</button>
+        `;
+        document.getElementById('btnBack').onclick = renderMainMenu;
+    }
+    function submitRequest(mainType, subType, details) {
+        if (!userLat || !userLng) {
+            alert('Location not detected. Please enable location services.');
+            return;
+        }
+        fetch('/submit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `request_type=${encodeURIComponent(mainType)}&sub_type=${encodeURIComponent(subType)}&details=${encodeURIComponent(details)}&latitude=${userLat}&longitude=${userLng}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                let advice = [
+                    'Stay calm and keep yourself safe.',
+                    'Move to a secure location if possible.',
+                    'Help is on the way.'
+                ];
+                if (mainType === 'Report injury/casualty') {
+                    advice = [
+                        'Apply first aid if you are trained.',
+                        'Keep the injured person calm and still.',
+                        'Help is on the way.'
+                    ];
+                } else if (mainType === 'Report attack') {
+                    advice = [
+                        'Find cover and stay low.',
+                        'Avoid open areas.',
+                        'Help is on the way.'
+                    ];
+                }
+                renderFinalConfirmation(data.message, advice);
+            } else {
+                mainContent.innerHTML = `<h3>Error</h3><p>${data.message || 'Could not submit request.'}</p><button class='sub-btn' id='btnBack'>Back</button>`;
+                document.getElementById('btnBack').onclick = renderMainMenu;
+            }
+        });
+    }
     </script>
 </body>
 </html> 
