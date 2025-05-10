@@ -1,0 +1,6 @@
+venv/
+emergency.db
+__pycache__/
+*.pyc
+.env
+requirements.txt 
