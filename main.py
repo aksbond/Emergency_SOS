@@ -91,6 +91,19 @@ class User(Base):
     surname = Column(String, nullable=True)
     requests = relationship("EmergencyRequest", back_populates="user")
 
+class RequestType(Base):
+    __tablename__ = "request_types"
+    type_code = Column(String, primary_key=True)
+    type_name = Column(String, nullable=False)
+    subtypes = relationship("RequestSubType", back_populates="type")
+
+class RequestSubType(Base):
+    __tablename__ = "request_subtypes"
+    subtype_code = Column(String, primary_key=True)
+    subtype_name = Column(String, nullable=False)
+    type_code = Column(String, ForeignKey("request_types.type_code"), nullable=False)
+    type = relationship("RequestType", back_populates="subtypes")
+
 class EmergencyRequest(Base):
     __tablename__ = "emergency_requests"
     request_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -98,10 +111,10 @@ class EmergencyRequest(Base):
     name = Column(String, nullable=False)  # Encrypted
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
-    request_type = Column(String, nullable=False)
-    sub_type = Column(String, nullable=True)
     details = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    type_code = Column(String, ForeignKey("request_types.type_code"), nullable=True)
+    subtype_code = Column(String, ForeignKey("request_subtypes.subtype_code"), nullable=True)
     user = relationship("User", back_populates="requests")
 
 # Create DB tables
@@ -131,8 +144,8 @@ async def home(request: Request):
 
 @app.post("/submit", response_class=HTMLResponse)
 async def submit(request: Request,
-    request_type: str = Form(...),
-    sub_type: str = Form(None),
+    type_code: str = Form(...),
+    subtype_code: str = Form(None),
     details: str = Form(None),
     latitude: float = Form(...),
     longitude: float = Form(...)):
@@ -146,8 +159,8 @@ async def submit(request: Request,
         user = result.fetchone()
         if not user or not user.name:
             return JSONResponse({"success": False, "message": "Profile incomplete."}, status_code=400)
-        # Rate limit: 3 requests/hour except for 'Find medical services'
-        if request_type != "Find medical services":
+        # Rate limit: 3 requests/hour except for 'MEDICAL'
+        if type_code != "MEDICAL":
             now = datetime.utcnow()
             one_hour_ago = now - timedelta(hours=1)
             count_result = await session.execute(
@@ -158,24 +171,27 @@ async def submit(request: Request,
             recent_requests = count_result.fetchall()
             if len(recent_requests) >= 3:
                 return JSONResponse({"success": False, "message": "Request limit reached: Only 3 requests allowed per hour."}, status_code=429)
-        # --- Handle request types ---
-        if request_type == "Find medical services":
-            return JSONResponse({"success": True, "message": "We are connecting you to the nearest medical services. (This is a mock confirmation.)"})
-        # For Call helpline, log minimal entry
         encrypted_name = fernet.encrypt(user.name.encode()).decode()
-        if request_type == "Call helpline":
-            emergency = EmergencyRequest(user_id=user_id, name=encrypted_name, latitude=latitude, longitude=longitude, request_type=request_type, sub_type=None, details=None)
+        # For Call helpline, log minimal entry
+        if type_code == "HELPLINE":
+            emergency = EmergencyRequest(user_id=user_id, name=encrypted_name, latitude=latitude, longitude=longitude, type_code=type_code, subtype_code=None, details=None)
             session.add(emergency)
             await session.commit()
             return JSONResponse({"success": True, "message": "Your request to call the helpline has been logged."})
+        # For Find medical services
+        if type_code == "MEDICAL":
+            emergency = EmergencyRequest(user_id=user_id, name=encrypted_name, latitude=latitude, longitude=longitude, type_code=type_code, subtype_code=None, details=None)
+            session.add(emergency)
+            await session.commit()
+            return JSONResponse({"success": True, "message": "We are connecting you to the nearest medical services. (This is a mock confirmation.)"})
         # For Report attack or Report injury/casualty
         emergency = EmergencyRequest(
             user_id=user_id,
             name=encrypted_name,
             latitude=latitude,
             longitude=longitude,
-            request_type=request_type,
-            sub_type=sub_type,
+            type_code=type_code,
+            subtype_code=subtype_code,
             details=details
         )
         session.add(emergency)
@@ -196,7 +212,6 @@ def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
 
 @app.get("/supersecretadmin", response_class=HTMLResponse)
 async def admin_view(request: Request, authorized: bool = Depends(verify_admin)):
-    # Advanced security: rate limiting and IP whitelist
     check_rate_limit(request.client.host)
     check_ip_whitelist(request)
     async with SessionLocal() as session:
@@ -204,8 +219,22 @@ async def admin_view(request: Request, authorized: bool = Depends(verify_admin))
             EmergencyRequest.__table__.select().order_by(EmergencyRequest.timestamp.desc())
         )
         requests = result.fetchall()
-        # Decrypt names for display and format timestamp
         decrypted_requests = []
+        # Mapping dicts for display
+        TYPE_CODES = {
+            "ATTACK": "Report attack",
+            "INJURY": "Report injury/casualty",
+            "MEDICAL": "Find medical services",
+            "HELPLINE": "Call helpline"
+        }
+        SUBTYPE_CODES = {
+            "BULLETS": "Bullets",
+            "DRONES": "Enemy drones",
+            "ARTILLERY": "Heavy artillery / Bomblasts / Missiles",
+            "LIFE_THREAT": "Life threatening injury",
+            "DEATH": "Death",
+            "MINOR": "Minor injuries"
+        }
         for row in requests:
             decrypted_name = fernet.decrypt(row.name.encode()).decode()
             formatted_ts = row.timestamp.strftime('%d %b %Y, %I:%M %p') if row.timestamp else ''
@@ -214,11 +243,14 @@ async def admin_view(request: Request, authorized: bool = Depends(verify_admin))
                 "name": decrypted_name,
                 "latitude": row.latitude,
                 "longitude": row.longitude,
-                "request_type": row.request_type,
+                "type_code": row.type_code,
+                "type_name": TYPE_CODES.get(row.type_code, row.type_code),
+                "subtype_code": row.subtype_code,
+                "subtype_name": SUBTYPE_CODES.get(row.subtype_code, row.subtype_code) if row.subtype_code else None,
+                "details": row.details,
                 "timestamp": formatted_ts
             })
     maptiler_key = os.environ.get("MAPTILER_API_KEY", "")
-    print("-------maptiler_key-------", maptiler_key)
     return templates.TemplateResponse(
         "admin.html",
         {"request": request, "requests": decrypted_requests, "maptiler_key": maptiler_key}
@@ -275,17 +307,29 @@ async def auth_status(request: Request):
 
 @app.get("/admin/api/requests")
 async def api_requests(
-    request_type: str = Query(None),
+    type_code: str = Query(None),
+    subtype_code: str = Query(None),
     start: str = Query(None),
     end: str = Query(None)
 ):
-    # Parse time range
-    start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M") if start else None
-    end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M") if end else None
+    import logging
+    def parse_dt(val):
+        if not val:
+            return None
+        try:
+            return datetime.strptime(val, "%Y-%m-%dT%H:%M")
+        except Exception as e:
+            logging.warning(f"Invalid date filter value: {val} ({e})")
+            return None
+    start_dt = parse_dt(start)
+    end_dt = parse_dt(end)
+    logging.info(f"/admin/api/requests filters: type_code={type_code}, subtype_code={subtype_code}, start={start}, end={end}, start_dt={start_dt}, end_dt={end_dt}")
     async with SessionLocal() as session:
         q = EmergencyRequest.__table__.select()
-        if request_type:
-            q = q.where(EmergencyRequest.request_type == request_type)
+        if type_code:
+            q = q.where(EmergencyRequest.type_code == type_code)
+        if subtype_code:
+            q = q.where(EmergencyRequest.subtype_code == subtype_code)
         if start_dt:
             q = q.where(EmergencyRequest.timestamp >= start_dt)
         if end_dt:
@@ -293,6 +337,20 @@ async def api_requests(
         q = q.order_by(EmergencyRequest.timestamp.desc())
         result = await session.execute(q)
         requests = result.fetchall()
+        TYPE_CODES = {
+            "ATTACK": "Report attack",
+            "INJURY": "Report injury/casualty",
+            "MEDICAL": "Find medical services",
+            "HELPLINE": "Call helpline"
+        }
+        SUBTYPE_CODES = {
+            "BULLETS": "Bullets",
+            "DRONES": "Enemy drones",
+            "ARTILLERY": "Heavy artillery / Bomblasts / Missiles",
+            "LIFE_THREAT": "Life threatening injury",
+            "DEATH": "Death",
+            "MINOR": "Minor injuries"
+        }
         data = []
         for row in requests:
             data.append({
@@ -300,7 +358,11 @@ async def api_requests(
                 "user_id": row.user_id,
                 "latitude": row.latitude,
                 "longitude": row.longitude,
-                "request_type": row.request_type,
+                "type_code": row.type_code,
+                "type_name": TYPE_CODES.get(row.type_code, row.type_code),
+                "subtype_code": row.subtype_code,
+                "subtype_name": SUBTYPE_CODES.get(row.subtype_code, row.subtype_code) if row.subtype_code else None,
+                "details": row.details,
                 "timestamp": row.timestamp.strftime('%d %b %Y, %I:%M %p') if row.timestamp else ''
             })
     return JSONResponse(data)
@@ -336,4 +398,22 @@ async def update_profile(request: Request, data: dict = Body(...)):
             return JSONResponse({"success": False, "message": "User not found."}, status_code=404)
         await session.execute(User.__table__.update().where(User.user_id == user_id).values(name=name, surname=surname))
         await session.commit()
-    return JSONResponse({"success": True, "message": "Profile updated."}) 
+    return JSONResponse({"success": True, "message": "Profile updated."})
+
+@app.get("/admin/api/types")
+async def api_types():
+    async with SessionLocal() as session:
+        result = await session.execute(RequestType.__table__.select())
+        types = result.fetchall()
+        data = []
+        for t in types:
+            sub_result = await session.execute(RequestSubType.__table__.select().where(RequestSubType.type_code == t.type_code))
+            subtypes = sub_result.fetchall()
+            data.append({
+                "type_code": t.type_code,
+                "type_name": t.type_name,
+                "subtypes": [
+                    {"subtype_code": s.subtype_code, "subtype_name": s.subtype_name} for s in subtypes
+                ]
+            })
+    return JSONResponse(data) 

@@ -6,64 +6,87 @@
     <title>Emergency Helper</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
-        .container { max-width: 420px; margin: 40px auto; background: #fff; padding: 2em 1.5em; border-radius: 14px; box-shadow: 0 4px 24px #0002; }
-        h2 { text-align: center; font-weight: 700; letter-spacing: 0.5px; color: #1d3557; margin-bottom: 1.5em; }
+        :root {
+            --primary: #e63946;
+            --secondary: #457b9d;
+            --success: #38b000;
+            --background: #f8f9fa;
+            --surface: #fff;
+            --text: #222;
+            --border: #e0e0e0;
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--background); margin: 0; padding: 0; color: var(--text); }
+        .container { max-width: 420px; margin: 40px auto; background: var(--surface); padding: 2em 1.5em; border-radius: 12px; border: 1px solid var(--border); }
+        h2 { text-align: center; font-weight: 700; letter-spacing: 0.5px; color: var(--secondary); margin-bottom: 1.5em; }
         .big-btn {
             width: 100%;
-            padding: 1.2em 1em;
+            padding: 1.1em 1em;
             margin: 1em 0;
-            font-size: 1.15em;
+            font-size: 1.1em;
             font-weight: 600;
-            border-radius: 10px;
-            border: none;
-            background: linear-gradient(90deg, #e63946 60%, #457b9d 100%);
+            border-radius: 8px;
+            border: 2px solid var(--primary);
+            background: var(--primary);
             color: #fff;
-            box-shadow: 0 2px 8px #0001;
-            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            transition: background 0.15s, border 0.15s, color 0.15s;
             display: flex;
             align-items: center;
-            gap: 0.9em;
+            gap: 0.8em;
             justify-content: flex-start;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.01em;
+            box-shadow: none;
         }
-        .big-btn:active, .big-btn:focus { background: linear-gradient(90deg, #d90429 60%, #1d3557 100%); outline: none; box-shadow: 0 0 0 2px #a8dadc; transform: scale(0.98); }
-        .big-btn i { font-size: 1.5em; margin-right: 0.5em; }
+        .big-btn:active, .big-btn:focus, .big-btn:hover {
+            background: #fff;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            outline: none;
+        }
+        .big-btn i { font-size: 1.4em; margin-right: 0.4em; color: inherit; }
         .sub-btn {
             width: 100%;
-            padding: 1em 1em;
+            padding: 0.9em 1em;
             margin: 0.5em 0;
             font-size: 1em;
-            border-radius: 8px;
-            border: none;
-            background: linear-gradient(90deg, #457b9d 60%, #a8dadc 100%);
+            border-radius: 7px;
+            border: 2px solid var(--secondary);
+            background: var(--secondary);
             color: #fff;
             font-weight: 500;
-            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            transition: background 0.15s, border 0.15s, color 0.15s;
             display: flex;
             align-items: center;
             gap: 0.7em;
             justify-content: flex-start;
+            box-shadow: none;
         }
-        .sub-btn:active, .sub-btn:focus { background: linear-gradient(90deg, #1d3557 60%, #a8dadc 100%); outline: none; box-shadow: 0 0 0 2px #e63946; transform: scale(0.98); }
-        .sub-btn i { font-size: 1.2em; margin-right: 0.4em; }
+        .sub-btn:active, .sub-btn:focus, .sub-btn:hover {
+            background: #fff;
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            outline: none;
+        }
+        .sub-btn i { font-size: 1.1em; margin-right: 0.3em; color: inherit; }
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
             z-index: 1000; transition: opacity 0.3s;
         }
         .modal-content {
-            background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 2px 8px #0002; width: 320px;
+            background: var(--surface); padding: 2em; border-radius: 10px; border: 1px solid var(--border); width: 320px;
             display: flex; flex-direction: column; align-items: center;
         }
         .modal-content input, .modal-content textarea {
-            width: 100%; margin-bottom: 1em; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc;
+            width: 100%; margin-bottom: 1em; padding: 0.5em; border-radius: 4px; border: 1px solid var(--border); background: var(--background); color: var(--text); font-size: 1em;
         }
-        .modal-content label { align-self: flex-start; margin-bottom: 0.2em; }
-        .modal-content .error { color: #e63946; margin-bottom: 1em; }
-        #signoutBtn { margin-top: 1em; background: #888; border-radius: 8px; font-weight: 500; }
-        #signoutBtn:hover { background: #444; }
+        .modal-content label { align-self: flex-start; margin-bottom: 0.2em; font-size: 0.98em; color: var(--secondary); }
+        .modal-content .error { color: var(--primary); margin-bottom: 1em; }
+        #signoutBtn { margin-top: 1em; background: var(--secondary); border-radius: 7px; font-weight: 500; color: #fff; border: 2px solid var(--secondary); transition: background 0.15s, color 0.15s; }
+        #signoutBtn:hover, #signoutBtn:focus { background: #fff; color: var(--secondary); border: 2px solid var(--secondary); }
         textarea { resize: vertical; min-height: 48px; }
+        h3 { color: var(--primary); font-weight: 600; margin-bottom: 1em; }
+        .success { color: var(--success); font-weight: 600; }
+        ul { padding-left: 1.2em; }
         @media (max-width: 500px) {
             .container { max-width: 98vw; padding: 1em 0.5em; }
             .modal-content { width: 95vw; padding: 1em; }
@@ -171,72 +194,105 @@
     };
 
     // --- Inline SPA-like UI logic ---
-    function renderMainMenu() {
-        mainContent.innerHTML = `
-            <button class="big-btn" id="btnAttack"><i class="bi bi-exclamation-triangle-fill"></i>1. Report attack</button>
-            <button class="big-btn" id="btnInjury"><i class="bi bi-emoji-dizzy-fill"></i>2. Report injury/casualty</button>
-            <button class="big-btn" id="btnMedical"><i class="bi bi-hospital-fill"></i>3. Find medical services</button>
-            <button class="big-btn" id="btnHelpline"><i class="bi bi-telephone-fill"></i>4. Call helpline</button>
-        `;
-        document.getElementById('btnAttack').onclick = renderAttackSubtypes;
-        document.getElementById('btnInjury').onclick = renderInjurySubtypes;
-        document.getElementById('btnMedical').onclick = renderMedicalConfirmation;
-        document.getElementById('btnHelpline').onclick = renderHelplineConfirmation;
+    // Centralized type and subtype definitions (single source of truth)
+    const REQUEST_TYPES = [
+        { code: "ATTACK", name: "Report attack", subtypes: [
+            { code: "BULLETS", name: "Bullets" },
+            { code: "DRONES", name: "Enemy drones" },
+            { code: "ARTILLERY", name: "Heavy artillery / Bomblasts / Missiles" }
+        ]},
+        { code: "INJURY", name: "Report injury/casualty", subtypes: [
+            { code: "LIFE_THREAT", name: "Life threatening injury" },
+            { code: "DEATH", name: "Death" },
+            { code: "MINOR", name: "Minor injuries" }
+        ]},
+        { code: "MEDICAL", name: "Find medical services", subtypes: [] },
+        { code: "HELPLINE", name: "Call helpline", subtypes: [] }
+    ];
+    // Helper: get type by code or name
+    function getTypeByName(name) {
+        return REQUEST_TYPES.find(t => t.name === name);
     }
-    function renderAttackSubtypes() {
+    function getTypeByCode(code) {
+        return REQUEST_TYPES.find(t => t.code === code);
+    }
+    function getSubtypeByName(typeCode, subName) {
+        const type = getTypeByCode(typeCode);
+        if (!type) return undefined;
+        return type.subtypes.find(s => s.name === subName);
+    }
+    function getSubtypeByCode(typeCode, subCode) {
+        const type = getTypeByCode(typeCode);
+        if (!type) return undefined;
+        return type.subtypes.find(s => s.code === subCode);
+    }
+    function renderMainMenu() {
+        mainContent.innerHTML = REQUEST_TYPES.map(t =>
+            `<button class="big-btn" id="btnType_${t.code}"><i class="bi ${t.code === 'ATTACK' ? 'bi-exclamation-triangle-fill' : t.code === 'INJURY' ? 'bi-emoji-dizzy-fill' : t.code === 'MEDICAL' ? 'bi-hospital-fill' : 'bi-telephone-fill'}"></i>${t.name}</button>`
+        ).join("");
+        REQUEST_TYPES.forEach(t => {
+            document.getElementById(`btnType_${t.code}`).onclick = () => {
+                if (t.subtypes.length > 0) {
+                    renderSubtypes(t.code);
+                } else if (t.code === "MEDICAL") {
+                    renderMedicalConfirmation();
+                } else if (t.code === "HELPLINE") {
+                    renderHelplineConfirmation();
+                }
+            };
+        });
+    }
+    function renderSubtypes(typeCode) {
+        const type = getTypeByCode(typeCode);
+        if (!type) return;
         mainContent.innerHTML = `
-            <h3 style='color:#e63946;'><i class="bi bi-exclamation-triangle-fill"></i> Report Attack</h3>
-            <button class="sub-btn" id="btnBullets"><i class="bi bi-bullseye"></i>Bullets</button>
-            <button class="sub-btn" id="btnDrones"><i class="bi bi-robot"></i>Enemy drones</button>
-            <button class="sub-btn" id="btnArtillery"><i class="bi bi-lightning-charge-fill"></i>Heavy artillery / Bomblasts / Missiles</button>
+            <h3><i class="bi ${type.code === 'ATTACK' ? 'bi-exclamation-triangle-fill' : 'bi-emoji-dizzy-fill'}"></i> ${type.name}</h3>
+            ${type.subtypes.map(s => `<button class="sub-btn" id="btnSub_${s.code}"><i class="bi bi-chevron-right"></i>${s.name}</button>`).join("")}
             <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
         `;
-        document.getElementById('btnBullets').onclick = () => renderAttackConfirm('Bullets');
-        document.getElementById('btnDrones').onclick = () => renderAttackConfirm('Enemy drones');
-        document.getElementById('btnArtillery').onclick = () => renderAttackConfirm('Heavy artillery / Bomblasts / Missiles');
+        type.subtypes.forEach(s => {
+            document.getElementById(`btnSub_${s.code}`).onclick = () => {
+                if (type.code === "ATTACK") {
+                    renderAttackConfirm(type.code, s.code);
+                } else if (type.code === "INJURY") {
+                    renderInjuryDetails(type.code, s.code);
+                }
+            };
+        });
         document.getElementById('btnBack').onclick = renderMainMenu;
     }
-    function renderAttackConfirm(subType) {
+    function renderAttackConfirm(typeCode, subCode) {
+        const type = getTypeByCode(typeCode);
+        const sub = getSubtypeByCode(typeCode, subCode);
         mainContent.innerHTML = `
-            <h3 style='color:#e63946;'><i class="bi bi-exclamation-triangle-fill"></i> ${subType}</h3>
+            <h3><i class="bi bi-exclamation-triangle-fill"></i> ${sub ? sub.name : ''}</h3>
             <p>Confirm location and submit?</p>
             <button class="sub-btn" id="btnConfirm"><i class="bi bi-check-circle-fill"></i>Confirm & Submit</button>
             <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
         `;
-        document.getElementById('btnConfirm').onclick = () => submitRequest('Report attack', subType, '');
-        document.getElementById('btnBack').onclick = renderAttackSubtypes;
+        document.getElementById('btnConfirm').onclick = () => submitRequest(typeCode, subCode, '');
+        document.getElementById('btnBack').onclick = () => renderSubtypes(typeCode);
     }
-    function renderInjurySubtypes() {
+    function renderInjuryDetails(typeCode, subCode) {
+        const type = getTypeByCode(typeCode);
+        const sub = getSubtypeByCode(typeCode, subCode);
         mainContent.innerHTML = `
-            <h3 style='color:#e63946;'><i class="bi bi-emoji-dizzy-fill"></i> Report Injury/Casualty</h3>
-            <button class="sub-btn" id="btnLifeThreat"><i class="bi bi-heart-pulse-fill"></i>Life threatening injury</button>
-            <button class="sub-btn" id="btnDeath"><i class="bi bi-x-octagon-fill"></i>Death</button>
-            <button class="sub-btn" id="btnMinor"><i class="bi bi-emoji-frown-fill"></i>Minor injuries</button>
-            <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
-        `;
-        document.getElementById('btnLifeThreat').onclick = () => renderInjuryDetails('Life threatening injury');
-        document.getElementById('btnDeath').onclick = () => renderInjuryDetails('Death');
-        document.getElementById('btnMinor').onclick = () => renderInjuryDetails('Minor injuries');
-        document.getElementById('btnBack').onclick = renderMainMenu;
-    }
-    function renderInjuryDetails(subType) {
-        mainContent.innerHTML = `
-            <h3 style='color:#e63946;'><i class="bi bi-emoji-dizzy-fill"></i> ${subType}</h3>
+            <h3><i class="bi bi-emoji-dizzy-fill"></i> ${sub ? sub.name : ''}</h3>
             <label for='injuryDetails'>Details (optional):</label>
             <textarea id='injuryDetails' rows='2' placeholder='Describe the situation (optional)'></textarea>
-            <p style='color:#e63946;font-size:0.95em;'>Warning: False or frivolous reports may delay real help.</p>
+            <p style='color:var(--primary);font-size:0.95em;'>Warning: False or frivolous reports may delay real help.</p>
             <button class="sub-btn" id="btnConfirm"><i class="bi bi-check-circle-fill"></i>Confirm & Submit</button>
             <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back</button>
         `;
         document.getElementById('btnConfirm').onclick = () => {
             const details = document.getElementById('injuryDetails').value;
-            submitRequest('Report injury/casualty', subType, details);
+            submitRequest(typeCode, subCode, details);
         };
-        document.getElementById('btnBack').onclick = renderInjurySubtypes;
+        document.getElementById('btnBack').onclick = () => renderSubtypes(typeCode);
     }
     function renderMedicalConfirmation() {
         mainContent.innerHTML = `
-            <h3 style='color:#457b9d;'><i class="bi bi-hospital-fill"></i> Find Medical Services</h3>
+            <h3 style='color:var(--secondary);'><i class="bi bi-hospital-fill"></i> Find Medical Services</h3>
             <p>We are connecting you to the nearest medical services. (This is a mock confirmation.)</p>
             <div style='margin-top:1em;'>
                 <b>What to do now?</b>
@@ -250,10 +306,12 @@
             <button class="sub-btn" id="btnBack"><i class="bi bi-arrow-left"></i>Back to Main Menu</button>
         `;
         document.getElementById('btnBack').onclick = renderMainMenu;
+        // Actually submit the request
+        submitRequest("MEDICAL", null, '');
     }
     function renderHelplineConfirmation() {
         mainContent.innerHTML = `
-            <h3 style='color:#457b9d;'><i class="bi bi-telephone-fill"></i> Call Helpline</h3>
+            <h3 style='color:var(--secondary);'><i class="bi bi-telephone-fill"></i> Call Helpline</h3>
             <p>Your request to call the helpline has been logged. (This is a mock confirmation.)</p>
             <div style='margin-top:1em;'>
                 <b>What to do now?</b>
@@ -267,11 +325,11 @@
         `;
         document.getElementById('btnBack').onclick = renderMainMenu;
         // Actually submit the request
-        submitRequest('Call helpline', '', '');
+        submitRequest("HELPLINE", null, '');
     }
     function renderFinalConfirmation(message, adviceList) {
         mainContent.innerHTML = `
-            <h3 style='color:#38b000;'><i class="bi bi-patch-check-fill"></i> Submitted!</h3>
+            <h3 class='success'><i class="bi bi-patch-check-fill"></i> Submitted!</h3>
             <p>${message}</p>
             <div style='margin-top:1em;'>
                 <b>What to do now?</b>
@@ -283,15 +341,23 @@
         `;
         document.getElementById('btnBack').onclick = renderMainMenu;
     }
-    function submitRequest(mainType, subType, details) {
+    function submitRequest(type_code, subtype_code, details) {
         if (!userLat || !userLng) {
             alert('Location not detected. Please enable location services.');
             return;
         }
+        if (!type_code) {
+            alert('Request type is not recognized. Please try again.');
+            return;
+        }
+        let body = `type_code=${encodeURIComponent(type_code)}&details=${encodeURIComponent(details)}&latitude=${userLat}&longitude=${userLng}`;
+        if (subtype_code) {
+            body += `&subtype_code=${encodeURIComponent(subtype_code)}`;
+        }
         fetch('/submit', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `request_type=${encodeURIComponent(mainType)}&sub_type=${encodeURIComponent(subType)}&details=${encodeURIComponent(details)}&latitude=${userLat}&longitude=${userLng}`
+            body: body
         })
         .then(r => r.json())
         .then(data => {
@@ -301,13 +367,13 @@
                     'Move to a secure location if possible.',
                     'Help is on the way.'
                 ];
-                if (mainType === 'Report injury/casualty') {
+                if (type_code === 'INJURY') {
                     advice = [
                         'Apply first aid if you are trained.',
                         'Keep the injured person calm and still.',
                         'Help is on the way.'
                     ];
-                } else if (mainType === 'Report attack') {
+                } else if (type_code === 'ATTACK') {
                     advice = [
                         'Find cover and stay low.',
                         'Avoid open areas.',
